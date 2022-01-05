@@ -30,8 +30,7 @@ def uncovered_line_numbers_generator(info_filepath, source_filepath):
         m = LCOV_DA_RE.match(line)
         if m:
             line, count = m.groups()
-            if int(count) == 0:
-                yield int(line)
+            yield int(line), int(count)
 
 
 """

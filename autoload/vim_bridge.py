@@ -9,38 +9,31 @@ import lcov_parser
 def vim_lcov_highlight_uncovered_lines(lcov_filepath):
     eof_line_number = int(vim.eval("line('$')"))
 
-    def create_fold_if_needed(last_line_number, line_number):
-        start_line = last_line_number + 1
-        end_line = line_number
-        if start_line > eof_line_number or end_line > eof_line_number:
-            log = "[vim-lcov][WARN]: no such line range {}~{}".format(
-                start_line, end_line)
-            vim.command('echohl ErrorMsg | echo "' + log + '" | echohl None')
-            return False
-        if end_line > start_line + 1:
-            vim.command(':' + str(start_line) +
-                        ',' + str(end_line) + 'fold')
-        return True
-
     if not os.path.isfile(lcov_filepath):
         log = "[vim-lcov][ERROR]: no such file {}".format(lcov_filepath)
         vim.command('echohl ErrorMsg | echo "' + log + '" | echohl None')
         return False
-    last_line_number = 0
+
     # NOTE: sign id must be number > 0 and uniq in some group
     sign_id_start = 1
     group = 'vim-lcov_' + vim.current.buffer.name
+
     # remove all previous signs if exist
     vim.command(
         'exe ":sign unplace * group=' +
         group +
         ' file=".expand("%:p")')
-    # unfold all
-    vim.command(':silent! %foldopen!')
+
     priority = 9999  # NOTE: default value is 10
-    for sign_id, line_number in enumerate(
+    for sign_id, (line_number, count) in enumerate(
         lcov_parser.uncovered_line_numbers_generator(
             lcov_filepath, os.path.basename(vim.current.buffer.name)), start=sign_id_start):
+
+        if count == 0:
+            name = 'vim_lcov_uncovered'
+        else:
+            name = 'vim_lcov_covered'
+
         vim.command(
             'exe ":sign place ' +
             str(sign_id) +
@@ -48,9 +41,6 @@ def vim_lcov_highlight_uncovered_lines(lcov_filepath):
             str(line_number) +
             ' group=' + group +
             ' priority=' + str(priority) +
-            ' name=vim_lcov_uncovered file=".expand("%:p")')
-        create_fold_if_needed(last_line_number, line_number - 1)
-        last_line_number = line_number
+            ' name=' + str(name) + ' file=".expand("%:p")')
 
-    create_fold_if_needed(last_line_number, eof_line_number)
     return True
