@@ -19,8 +19,7 @@ def uncovered_line_numbers_generator(info_filepath, source_filepath):
             filename, = m.groups()
         if not filename:
             continue
-        if filename.endswith(
-                source_filepath) or source_filepath.endswith(filename):
+        if os.path.basename(filename) == source_filepath:
             pass
         else:
             filename = ''
